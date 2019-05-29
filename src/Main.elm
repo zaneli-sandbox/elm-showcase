@@ -3,7 +3,7 @@ module Main exposing (Model, Msg(..), init, main, update, view)
 import Array
 import Browser
 import Dict
-import Html exposing (Html, div, li, section, text, ul)
+import Html exposing (Html, a, aside, div, li, section, text, ul)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Parts.FiletableSortableTable as FSTable
@@ -82,10 +82,16 @@ view model =
             (model.parts |> Maybe.map List.singleton) |> Maybe.withDefault []
     in
     section [ class "section" ]
-        [ ul []
-            [ li [ onClick ShowParts ] [ text "フィルタ・ソート機能付きリスト" ]
+        [ div [ class "columns" ]
+            [ div [ class "column is-one-fifth" ]
+                [ aside [ class "menu" ]
+                    [ ul [ class "menu-list" ]
+                        [ li [ onClick ShowParts ] [ a [] [ text "フィルタ・ソート機能付きテーブル" ] ]
+                        ]
+                    ]
+                ]
+            , div [ class "container column" ] parts
             ]
-        , div [ class "container" ] parts
         ]
 
 
