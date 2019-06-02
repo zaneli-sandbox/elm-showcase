@@ -1,10 +1,11 @@
-port module Parts.DynamicDownloader exposing (Model, Msg(..), download, init, update, view)
+module Parts.DynamicDownloader exposing (Model, Msg(..), init, update, view)
 
 import Events exposing (onChange)
-import Html exposing (Html, a, div, input, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr)
-import Html.Attributes exposing (class, disabled, placeholder, rows, type_, value)
+import Html exposing (Html, a, button, div, input, option, p, select, span, table, tbody, td, text, textarea, th, thead, tr)
+import Html.Attributes exposing (class, disabled, download, href, placeholder, rows, type_, value)
 import Html.Events exposing (on, onClick, onInput)
 import Json.Decode as Json
+import Url exposing (percentEncode)
 
 
 
@@ -32,7 +33,6 @@ type Msg
     = InputFilename String
     | ChangeContentType String
     | InputContents String
-    | Download
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -46,9 +46,6 @@ update msg model =
 
         InputContents contents ->
             ( { model | contents = contents, enableDownload = verify model.filename model.contentType contents }, Cmd.none )
-
-        Download ->
-            ( model, Cmd.batch [ download ( model.filename, model.contentType, model.contents ) ] )
 
 
 verify : String -> String -> String -> Bool
@@ -70,15 +67,19 @@ verifyJson value =
             False
 
 
-port download : ( String, String, String ) -> Cmd msg
-
-
 
 ---- VIEW ----
 
 
 view : Model -> Html Msg
 view model =
+    let
+        downloadHref =
+            "data:" ++ model.contentType ++ "," ++ percentEncode model.contents
+
+        downloadButton =
+            button [ class "button", type_ "button", model.enableDownload == False |> disabled ] [ text "ダウンロード" ]
+    in
     div [ class "box" ]
         [ div [ class "level" ]
             [ div [ class "level-left" ]
@@ -99,5 +100,11 @@ view model =
                 ]
             ]
         , div [] [ textarea [ class "textarea", rows 10, placeholder "contents", onInput InputContents ] [] ]
-        , div [] [ input [ class "button", type_ "button", onClick Download, model.enableDownload == False |> disabled, value "ダウンロード" ] [] ]
+        , div []
+            [ if model.enableDownload then
+                a [ download model.filename, href downloadHref ] [ downloadButton ]
+
+              else
+                downloadButton
+            ]
         ]
