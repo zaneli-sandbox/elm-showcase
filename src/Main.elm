@@ -6,6 +6,7 @@ import Dict
 import Html exposing (Html, a, aside, div, li, section, text, ul)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
+import Parts.DynamicDownloader as Downloader
 import Parts.FiletableSortableTable as FSTable
 
 
@@ -15,13 +16,14 @@ import Parts.FiletableSortableTable as FSTable
 
 type alias Model =
     { parts : Maybe (Html Msg)
-    , items : FSTable.Model FSTable.Msg
+    , fstable : FSTable.Model FSTable.Msg
+    , downloader : Downloader.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { parts = Nothing, items = initItems }, Cmd.none )
+    ( { parts = Nothing, fstable = FSTable.init, downloader = Downloader.init }, Cmd.none )
 
 
 initItems =
@@ -50,8 +52,10 @@ initItems =
 
 type Msg
     = NoOp
-    | ShowParts
+    | ShowFSTable
+    | ShowDownloader
     | FSTableMsg FSTable.Msg
+    | DownloaderMsg Downloader.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -60,15 +64,25 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
 
-        ShowParts ->
-            ( { model | parts = Just (Html.map FSTableMsg (FSTable.view model.items)) }, Cmd.none )
+        ShowFSTable ->
+            ( { model | parts = Just (Html.map FSTableMsg (FSTable.view initItems)), fstable = initItems }, Cmd.none )
+
+        ShowDownloader ->
+            ( { model | parts = Just (Html.map DownloaderMsg (Downloader.view Downloader.init)), downloader = Downloader.init }, Cmd.none )
 
         FSTableMsg subMsg ->
             let
                 newItems =
-                    FSTable.update subMsg model.items
+                    FSTable.update subMsg model.fstable
             in
-            ( { model | parts = Just (Html.map FSTableMsg (FSTable.view newItems)), items = newItems }, Cmd.none )
+            ( { model | parts = Just (Html.map FSTableMsg (FSTable.view newItems)), fstable = newItems }, Cmd.none )
+
+        DownloaderMsg subMsg ->
+            let
+                ( newModel, cmd ) =
+                    Downloader.update subMsg model.downloader
+            in
+            ( { model | parts = Just (Html.map DownloaderMsg (Downloader.view newModel)), downloader = newModel }, cmd )
 
 
 
@@ -86,7 +100,8 @@ view model =
             [ div [ class "column is-one-fifth" ]
                 [ aside [ class "menu" ]
                     [ ul [ class "menu-list" ]
-                        [ li [ onClick ShowParts ] [ a [] [ text "フィルタ・ソート機能付きテーブル" ] ]
+                        [ li [ onClick ShowFSTable ] [ a [] [ text "フィルタ・ソート機能付きテーブル" ] ]
+                        , li [ onClick ShowDownloader ] [ a [] [ text "動的ダウンローダー" ] ]
                         ]
                     ]
                 ]

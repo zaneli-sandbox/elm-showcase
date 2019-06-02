@@ -1,8 +1,8 @@
-module Parts.FiletableSortableTable exposing (Item(..), Model, Msg(..), update, view)
+module Parts.FiletableSortableTable exposing (Item(..), Model, Msg(..), init, update, view)
 
 import Array
 import Dict
-import Html exposing (Html, input, span, table, tbody, td, text, th, thead, tr)
+import Html exposing (Html, div, input, span, table, tbody, td, text, th, thead, tr)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick, onInput)
 
@@ -47,6 +47,11 @@ type alias Line msg =
 type Order
     = Asc
     | Desc
+
+
+init : Model Msg
+init =
+    { heads = [], lines = [], filterConditions = Dict.empty, sortCondition = Nothing }
 
 
 
@@ -189,31 +194,33 @@ view model =
             else
                 []
     in
-    table [ class "table" ]
-        [ thead []
-            [ tr []
-                (List.indexedMap
-                    (\index ->
-                        \head -> th [] (text head.label :: filterInputField head index ++ sortButtons head index)
+    div [ class "box" ]
+        [ table [ class "table" ]
+            [ thead []
+                [ tr []
+                    (List.indexedMap
+                        (\index ->
+                            \head -> th [] (text head.label :: filterInputField head index ++ sortButtons head index)
+                        )
+                        model.heads
                     )
-                    model.heads
+                ]
+            , tbody []
+                (List.filterMap
+                    (\line ->
+                        if line.viewable then
+                            Just
+                                (tr []
+                                    (line.items
+                                        |> Array.map (\item -> td [] [ label item ])
+                                        |> Array.toList
+                                    )
+                                )
+
+                        else
+                            Nothing
+                    )
+                    model.lines
                 )
             ]
-        , tbody []
-            (List.filterMap
-                (\line ->
-                    if line.viewable then
-                        Just
-                            (tr []
-                                (line.items
-                                    |> Array.map (\item -> td [] [ label item ])
-                                    |> Array.toList
-                                )
-                            )
-
-                    else
-                        Nothing
-                )
-                model.lines
-            )
         ]
